@@ -1,0 +1,52 @@
+{
+  "name": "@vardario/astring-ts-generator",
+  "version": "0.0.0-development",
+  "description": "Custom TypeScript code generator implementation for Astring, extending its capabilities to support TypeScript-specific syntax and features",
+  "license": "MIT",
+  "author": "Sahin Vardar",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "format": "prettier --plugin-search-dir . --write . && prettier-package-json --write",
+    "prepare": "husky",
+    "repo-clean": "git clean -xdf",
+    "semantic-release": "semantic-release",
+    "test": "vitest run"
+  },
+  "types": "lib/index.d.ts",
+  "peerDependencies": {
+    "astring": "^1.9.0"
+  },
+  "devDependencies": {
+    "acorn": "^8.14.0",
+    "acorn-typescript": "^1.4.13",
+    "astring": "^1.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "prettier-package-json": "^2.8.0",
+    "semantic-release": "^24.2.0",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "abstract-syntax-tree",
+    "acorn",
+    "ast",
+    "astring",
+    "code-generation",
+    "code-generator",
+    "compiler",
+    "generator",
+    "source-generation",
+    "ts",
+    "typescript"
+  ],
+  "lint-staged": {
+    "*": "prettier --write --ignore-unknown",
+    "package.json": "prettier-package-json --write"
+  },
+  "packageManager": "pnpm@9.1.0"
+}
