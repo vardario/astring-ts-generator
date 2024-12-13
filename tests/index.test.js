@@ -6,12 +6,6 @@ import generator from '../lib/index.js';
 import * as prettier from 'prettier';
 import esLintTsParse from '@typescript-eslint/parser';
 
-function astringTs(ast) {
-  return astring.generate(ast, {
-    generator
-  });
-}
-
 async function testResult(code, result, expectedResult) {
   const prettierOptions = {
     parser: 'typescript'
@@ -39,7 +33,9 @@ async function testParseTs(code, expectedResult) {
     sourceType: 'module'
   });
 
-  const esLintParseResult = astringTs(esLintAst);
+  const esLintParseResult = astring.generate(esLintAst, {
+    generator
+  });
   // const acornAstParseResult = astringTs(acornAst);
 
   testResult(code, esLintParseResult, expectedResult);
