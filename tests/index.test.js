@@ -6,18 +6,18 @@ import generator from '../lib/index.js';
 import * as prettier from 'prettier';
 import esLintTsParse from '@typescript-eslint/parser';
 
-async function testResult(code, result, expectedResult) {
+async function testResult(code, result) {
   const prettierOptions = {
     parser: 'typescript'
   };
 
   const formattedResult = await prettier.format(result, prettierOptions);
-  const formattedExpectedResult = await prettier.format(expectedResult ?? code, prettierOptions);
+  const formattedExpectedResult = await prettier.format(code, prettierOptions);
 
   expect(formattedResult).toBe(formattedExpectedResult);
 }
 
-async function testParseTs(code, expectedResult) {
+async function testParseTs(code, disableAcornTesting = false) {
   const acornAst = acorn.Parser.extend(
     acornTypescript({
       allowSatisfies: true
@@ -41,8 +41,10 @@ async function testParseTs(code, expectedResult) {
     generator
   });
 
-  testResult(code, esLintParseResult, expectedResult);
-  testResult(code, acornAstParseResult, expectedResult);
+  await testResult(code, esLintParseResult);
+  if (!disableAcornTesting) {
+    await testResult(code, acornAstParseResult);
+  }
 }
 
 /**
@@ -461,7 +463,7 @@ describe('class', () => {
 
   /**
    * I don't see anything in the AST which would help us to recreate ```(this.param as GenericEsTreeNode)```
-   * Seems like acorn-typescript does not support TSAsExpression.
+   * Seems like acorn-typescript does not support TSAsExpression, therefore we disable testing for acorn-typescript
    */
   test('issue 44', async () => {
     await testParseTs(
@@ -476,7 +478,8 @@ describe('class', () => {
         }
         super.parseNode(esTreeNode);
       }
-    }`
+    }`,
+      true
     );
   });
 });
