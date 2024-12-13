@@ -4,18 +4,7 @@ import * as astring from 'astring';
 import acornTypescript from 'acorn-typescript';
 import generator from '../lib/index.js';
 import * as prettier from 'prettier';
-
-function parseTs(code) {
-  return acorn.Parser.extend(
-    acornTypescript({
-      allowSatisfies: true
-    })
-  ).parse(code, {
-    sourceType: 'module',
-    ecmaVersion: 'latest',
-    locations: true
-  });
-}
+import esLintTsParse from '@typescript-eslint/parser';
 
 function astringTs(ast) {
   return astring.generate(ast, {
@@ -23,10 +12,7 @@ function astringTs(ast) {
   });
 }
 
-async function testParseTs(code, expectedResult) {
-  const ast = parseTs(code);
-  const result = astringTs(ast);
-
+async function testResult(code, result, expectedResult) {
   const prettierOptions = {
     parser: 'typescript'
   };
@@ -35,6 +21,28 @@ async function testParseTs(code, expectedResult) {
   const formattedExpectedResult = await prettier.format(expectedResult ?? code, prettierOptions);
 
   expect(formattedResult).toBe(formattedExpectedResult);
+}
+
+async function testParseTs(code, expectedResult) {
+  const acornAst = acorn.Parser.extend(
+    acornTypescript({
+      allowSatisfies: true
+    })
+  ).parse(code, {
+    sourceType: 'module',
+    ecmaVersion: 'latest',
+    locations: true
+  });
+
+  const esLintAst = esLintTsParse.parse(code, {
+    ecmaVersion: 'latest',
+    sourceType: 'module'
+  });
+
+  const esLintParseResult = astringTs(esLintAst);
+  // const acornAstParseResult = astringTs(acornAst);
+
+  testResult(code, esLintParseResult, expectedResult);
 }
 
 /**
@@ -457,8 +465,7 @@ describe('class', () => {
    */
   test('issue 44', async () => {
     await testParseTs(
-      `
-      class Test {
+      `class Test {
       parseNode(esTreeNode: GenericEsTreeNode): void {
         const { param } = esTreeNode;
         if (param) {
@@ -469,22 +476,7 @@ describe('class', () => {
         }
         super.parseNode(esTreeNode);
       }
-    }`,
-      `class Test {
-  parseNode(esTreeNode: GenericEsTreeNode): void {
-    const { param } = esTreeNode;
-    if (param) {
-      this.param = new (this.context.getNodeConstructor(param.type))(
-        param,
-        this,
-        this.scope,
-      );
-      this.param!.declare("parameter", UNKNOWN_EXPRESSION);
-    }
-    super.parseNode(esTreeNode);
-  }
-}
-    `
+    }`
     );
   });
 });
