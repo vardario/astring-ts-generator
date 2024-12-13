@@ -36,9 +36,13 @@ async function testParseTs(code, expectedResult) {
   const esLintParseResult = astring.generate(esLintAst, {
     generator
   });
-  // const acornAstParseResult = astringTs(acornAst);
+
+  const acornAstParseResult = astring.generate(acornAst, {
+    generator
+  });
 
   testResult(code, esLintParseResult, expectedResult);
+  testResult(code, acornAstParseResult, expectedResult);
 }
 
 /**
