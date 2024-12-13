@@ -4,9 +4,21 @@ import * as astring from 'astring';
 import acornTypescript from 'acorn-typescript';
 import generator from '../lib/index.js';
 import * as prettier from 'prettier';
+import esLintTsParse from '@typescript-eslint/parser';
 
-function parseTs(code) {
-  return acorn.Parser.extend(
+async function testResult(code, result) {
+  const prettierOptions = {
+    parser: 'typescript'
+  };
+
+  const formattedResult = await prettier.format(result, prettierOptions);
+  const formattedExpectedResult = await prettier.format(code, prettierOptions);
+
+  expect(formattedResult).toBe(formattedExpectedResult);
+}
+
+async function testParseTs(code, disableAcornTesting = false) {
+  const acornAst = acorn.Parser.extend(
     acornTypescript({
       allowSatisfies: true
     })
@@ -15,26 +27,24 @@ function parseTs(code) {
     ecmaVersion: 'latest',
     locations: true
   });
-}
 
-function astringTs(ast) {
-  return astring.generate(ast, {
+  const esLintAst = esLintTsParse.parse(code, {
+    ecmaVersion: 'latest',
+    sourceType: 'module'
+  });
+
+  const esLintParseResult = astring.generate(esLintAst, {
     generator
   });
-}
 
-async function testParseTs(code, expectedResult) {
-  const ast = parseTs(code);
-  const result = astringTs(ast);
+  const acornAstParseResult = astring.generate(acornAst, {
+    generator
+  });
 
-  const prettierOptions = {
-    parser: 'typescript'
-  };
-
-  const formattedResult = await prettier.format(result, prettierOptions);
-  const formattedExpectedResult = await prettier.format(expectedResult ?? code, prettierOptions);
-
-  expect(formattedResult).toBe(formattedExpectedResult);
+  await testResult(code, esLintParseResult);
+  if (!disableAcornTesting) {
+    await testResult(code, acornAstParseResult);
+  }
 }
 
 /**
@@ -453,12 +463,11 @@ describe('class', () => {
 
   /**
    * I don't see anything in the AST which would help us to recreate ```(this.param as GenericEsTreeNode)```
-   * Seems like acorn-typescript does not support TSAsExpression.
+   * Seems like acorn-typescript does not support TSAsExpression, therefore we disable testing for acorn-typescript
    */
   test('issue 44', async () => {
     await testParseTs(
-      `
-      class Test {
+      `class Test {
       parseNode(esTreeNode: GenericEsTreeNode): void {
         const { param } = esTreeNode;
         if (param) {
@@ -470,21 +479,7 @@ describe('class', () => {
         super.parseNode(esTreeNode);
       }
     }`,
-      `class Test {
-  parseNode(esTreeNode: GenericEsTreeNode): void {
-    const { param } = esTreeNode;
-    if (param) {
-      this.param = new (this.context.getNodeConstructor(param.type))(
-        param,
-        this,
-        this.scope,
-      );
-      this.param!.declare("parameter", UNKNOWN_EXPRESSION);
-    }
-    super.parseNode(esTreeNode);
-  }
-}
-    `
+      true
     );
   });
 });
