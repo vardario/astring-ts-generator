@@ -89,6 +89,15 @@ describe('assert', () => {
       `);
   });
 
+  test('import default', async () => {
+    await testParseTs(
+      `
+      import WifiSlashIcon from '$lib/components/icons/wifi-slash-icon.svelte';
+      import { i18n } from '$lib/utils';
+      `
+    );
+  });
+
   test('export all as assert', async () => {
     await testParseTs(`export * as name from "./foo.json" with { type: "json" };`);
   });
