@@ -101,6 +101,16 @@ describe('assert', () => {
   test('export all as assert', async () => {
     await testParseTs(`export * as name from "./foo.json" with { type: "json" };`);
   });
+
+  test('import type specifier', async () => {
+    await testParseTs(
+      ` interface Props {
+        class?: string | undefined | null;
+        children?: import('svelte').Snippet;
+        [key: string]: any
+      }`
+    );
+  });
 });
 
 describe('class', () => {
